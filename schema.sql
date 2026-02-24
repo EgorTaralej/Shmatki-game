@@ -61,24 +61,45 @@ CREATE TABLE game_rounds (
     id INT PRIMARY KEY AUTO_INCREMENT,
     room_id INT,
     round_number INT,
-    imposter_id INT,
+    imposter_player_id INT,
     secret_word VARCHAR(100),
-    status ENUM('active', 'completed') DEFAULT 'active',
+    category_id INT,
+    status ENUM('active', 'finished') DEFAULT 'active',
     winner_side ENUM('innocents', 'imposter', 'none') DEFAULT 'none',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE,
-    FOREIGN KEY (imposter_id) REFERENCES players(id) ON DELETE SET NULL
+    FOREIGN KEY (imposter_player_id) REFERENCES players(id) ON DELETE SET NULL,
+    FOREIGN KEY (category_id) REFERENCES themes_library(id) ON DELETE SET NULL
 );
 
-CREATE TABLE votes (
+CREATE TABLE round_submissions (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    round_id INT,
+    player_id INT,
+    submitted_word VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (round_id) REFERENCES game_rounds(id) ON DELETE CASCADE,
+    FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE
+);
+
+CREATE TABLE votes_history (
     id INT PRIMARY KEY AUTO_INCREMENT,
     round_id INT,
     voter_id INT,
-    voted_for_id INT,
+    target_id INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (round_id) REFERENCES game_rounds(id) ON DELETE CASCADE,
     FOREIGN KEY (voter_id) REFERENCES players(id) ON DELETE CASCADE,
-    FOREIGN KEY (voted_for_id) REFERENCES players(id) ON DELETE CASCADE
+    FOREIGN KEY (target_id) REFERENCES players(id) ON DELETE CASCADE
+);
+
+CREATE TABLE game_events (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    room_id INT,
+    event_type VARCHAR(50),
+    payload JSON,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE
 );
 
 CREATE TABLE user_stats (
