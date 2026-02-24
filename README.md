@@ -30,12 +30,19 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE categories (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+    is_active BOOLEAN DEFAULT 1
+);
+
 CREATE TABLE themes_library (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    category VARCHAR(100),
+    category_id INT,
     secret_word VARCHAR(100),
     hint_1 VARCHAR(100),
-    hint_2 VARCHAR(100)
+    hint_2 VARCHAR(100),
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
 );
 
 CREATE TABLE rooms (
@@ -61,6 +68,65 @@ CREATE TABLE players (
     last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
+CREATE TABLE game_settings (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    room_id INT UNIQUE,
+    max_players INT DEFAULT 8,
+    voting_duration INT DEFAULT 60,
+    discussion_duration INT DEFAULT 60,
+    difficulty_level ENUM('easy', 'medium', 'hard') DEFAULT 'medium',
+    FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE
+);
+
+CREATE TABLE game_rounds (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    room_id INT,
+    round_number INT,
+    imposter_id INT,
+    secret_word VARCHAR(100),
+    status ENUM('active', 'completed') DEFAULT 'active',
+    winner_side ENUM('innocents', 'imposter', 'none') DEFAULT 'none',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE,
+    FOREIGN KEY (imposter_id) REFERENCES players(id) ON DELETE SET NULL
+);
+
+CREATE TABLE votes (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    round_id INT,
+    voter_id INT,
+    voted_for_id INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (round_id) REFERENCES game_rounds(id) ON DELETE CASCADE,
+    FOREIGN KEY (voter_id) REFERENCES players(id) ON DELETE CASCADE,
+    FOREIGN KEY (voted_for_id) REFERENCES players(id) ON DELETE CASCADE
+);
+
+CREATE TABLE user_stats (
+    user_id INT PRIMARY KEY,
+    total_wins INT DEFAULT 0,
+    total_games INT DEFAULT 0,
+    imposter_wins INT DEFAULT 0,
+    caught_count INT DEFAULT 0,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE achievements (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    icon_url VARCHAR(255)
+);
+
+CREATE TABLE user_achievements (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT,
+    achievement_id INT,
+    earned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (achievement_id) REFERENCES achievements(id) ON DELETE CASCADE
 );
 
 🧠 Геймплей Логика (Core Loop)
