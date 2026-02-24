@@ -129,6 +129,9 @@ CREATE TABLE user_achievements (
     FOREIGN KEY (achievement_id) REFERENCES achievements(id) ON DELETE CASCADE
 );
 
+
+
+========================================================================================
 🧠 Геймплей Логика (Core Loop)
 Selection: Водещият (Host) избира дума.
 Reveal: Всички (включително Водещият) виждат думата. Шматката вижда само подсказките.
