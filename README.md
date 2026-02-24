@@ -1,26 +1,96 @@
-🎭 Project: Fake It Clone (Official Development Guide)Една социална игра за дедукция и импровизация. Целта е един играч (Самозванецът) да се впише в групата, без да знае тайната дума, докато останалите се опитват да го разкрият чрез действия и въпроси.🛠 Технологичен СтакСлойТехнологияFrontendReact 18+ (Vite), TypeScript, Tailwind CSSState ManagementZustand (за глобално състояние на играта)BackendPure PHP 8.x (без фреймърци)DatabaseMySQL 8.0 (PDO за сигурност)CommunicationREST API + Long Polling (или Pusher за реално време)👥 Организация на екипа (8 души)Frontend Team (3): Компоненти, Routing, Zustand състояние, API интеграция.Backend Team (2): API ендпоинти, MySQL архитектура, логика на рундовете.UI/UX Designer (1): Figma прототипи, мобилен дизайн, активи (икони, лога).QA Engineer (1): Тестване на логиката, edge cases, сигурност.Project Manager/Content (1): Trello мениджмънт, база данни с въпроси, документация.🏗️ Архитектура на базата данни (MySQL)SQL-- Основни таблици за стартиране
-CREATE TABLE rooms (
+🎭 Project: Шматки (Official Developer Guide)
+"Шматки" е социална игра за дедукция и импровизация (базирана на Fake It), реализирана в модерна 3D уеб среда. Целта е "Шматката" (Импостърът) да се вгради в групата без да знае тайната дума, докато останалите се опитват да го разкрият чрез една-единствена асоциация.
+
+🛠 Технологичен Стак
+Слой	Технология
+Frontend	React 18 (Vite), TypeScript, Tailwind CSS
+3D Engine	React Three Fiber (Three.js) + @react-three/drei
+State Management	Zustand (за логиката на играта и UI състоянието)
+Backend	Pure PHP 8.x (без фреймворци)
+Database	MySQL 8.0 (PDO за сигурност)
+Animations	Framer Motion (UI) + GSAP (3D)
+Communication	REST API + High-frequency Polling
+
+👥 Роли в Системата
+Super Admin (Глобален): Управлява целия сайт, профилите и статута на стаите. Има достъп до "Админ Панел".
+Водещ (Game Host): Един от играчите в стаята. Той избира категория и дума (ръчно или от базата). Ролята е ротационна.
+Шматката (Imposter): Не знае думата. Получава 2 подсказки (hints) за темата.
+Играчи (Innocents): Получават тайната дума и се опитват да разкрият Шматката.
+
+🏗️ Архитектура на Базата Данни (MySQL)
+code
+SQL
+-- Тайна библиотека с категории и думи
+CREATE TABLE themes_library (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    room_code VARCHAR(10) UNIQUE, -- 4-цифрен код за вход
-    status ENUM('lobby', 'playing', 'voting', 'results') DEFAULT 'lobby',
-    current_category_id INT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    category VARCHAR(100),
+    secret_word VARCHAR(100),
+    hint_1 VARCHAR(100),
+    hint_2 VARCHAR(100)
 );
 
+-- Стаи (поддържащи до 30 души)
+CREATE TABLE rooms (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    room_code VARCHAR(10) UNIQUE,
+    status ENUM('lobby', 'selection', 'reveal', 'discussing', 'voting', 'results') DEFAULT 'lobby',
+    host_id INT,
+    current_word VARCHAR(100),
+    current_hints JSON,
+    timer_ends_at TIMESTAMP
+);
+
+-- Играчи и техните роли
 CREATE TABLE players (
     id INT PRIMARY KEY AUTO_INCREMENT,
     room_id INT,
     username VARCHAR(50),
-    is_fake BOOLEAN DEFAULT 0,
-    is_leader BOOLEAN DEFAULT 0,
+    role ENUM('innocent', 'imposter', 'spectator') DEFAULT 'innocent',
+    is_superadmin BOOLEAN DEFAULT 0,
     score INT DEFAULT 0,
-    last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- За изхвърляне на неактивни
+    last_word_submitted VARCHAR(100), -- Думата за чата
+    voted_for_id INT,
+    last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE
 );
 
-CREATE TABLE questions (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    category VARCHAR(50),
-    task_text VARCHAR(255)
-);
-🧠 Пътна карта (Trello Колони & Задачи)1. Проектиране и Дизайн (Design & UX)[ ] User Flow: Диаграма на преходите (Home -> Lobby -> Game -> Voting -> Score).[ ] Figma Prototype: Мобилен интерфейс (Mobile-First дизайн).[ ] Content Pack: Списък с 100+ задачи, разделени по категории.2. Подготовка и Setup (Infrastructure)[ ] [FE] Setup на Vite + TypeScript + Tailwind.[ ] [BE] Настройка на PDO връзка с MySQL и CORS хедъри.[ ] [Git] Дефиниране на клонове: main, develop и feature/*.3. Логика на играта (Core Game Logic)[ ] Room Lifecycle: Автоматична смяна на статуса на стаята (lobby -> playing -> voting).[ ] Role Distributor: PHP функция за случаен избор на Самозванец при старт.[ ] Sync System: Механизъм за синхронизация на всички играчи (Long Polling или WebSockets).[ ] Voting Engine: Логика за обработка на гласове и определяне на победител за рунда.4. Фронтенд разработка (React)[ ] Lobby Page: Показване на списък с играчи и бутон "Start Game" за лидера.[ ] Game Page: Динамичен екран - показва думата на играчите и "ИМПРОВИЗИРАЙ" на самозванеца.[ ] Voting UI: Списък с играчи, които могат да бъдат посочени с един клик.[ ] Zustand Store: Глобално състояние: roomCode, playerID, currentRole, gameState.5. Бекенд и API (Pure PHP)[ ] create_room.php: Генерира код и вкарва запис в rooms.[ ] join_room.php: Проверява кода и добавя играч в players.[ ] get_game_state.php: Основен ендпоинт, който връща всичко за текущата секунда в стаята.[ ] submit_vote.php: Записва гласа на потребителя.6. Тестване и Полиране (QA & Final)[ ] Edge Case: Какво става, ако лидерът напусне стаята?[ ] Stress Test: Тест с 8 паралелни сесии през различни устройства.[ ] Polish: Анимации при разкриване на самозванеца.🚦 Правила за разработкаAPI First: Първо се дефинира JSON структурата на отговора, после се пише код.TS Everywhere: Всички данни в React трябва да имат дефинирани interface.No Raw SQL: В PHP се използват само prepared statements.Clean Code: Коментари на български/английски (по избор), но консистентно.🚀 Как се стартира?Backend:Настройте MySQL базата данни чрез предоставения SQL.Стартирайте локален сървър: php -S localhost:8000.Frontend:Изпълнете npm install.Стартирайте проекта: npm run dev.
+🧠 Пътна карта (Roadmap)
+1. 3D Визуализация (The Round Table)
+
+Dynamic Scene: Създаване на 3D кръгла маса, чийто мащаб се променя според броя играчи (3 до 30).
+
+Avatars: Low-poly фигурки, разположени равномерно около масата.
+
+Roblox Bubbles: Реализиране на 3D Chat Bubbles над главите на играчите чрез Html компонента на drei.
+2. Геймплей Логика (Core Loops)
+
+Phase: Selection: Водещият избира тема (ръчно писане или бутон "Случайна от БД").
+
+Phase: Discussing: 1 минута време. Всеки играч праща точно ЕДНА дума. Тя се появява едновременно в чата (вдясно) и над главата му (3D).
+
+Phase: Voting: Екран тип "Among Us" за посочване на Шматката.
+3. Бекенд API (PHP)
+
+create_room.php / join_room.php: Управление на достъпа.
+
+get_game_state.php: Синхронизиращ ендпоинт (връща фаза, таймер, играчи и чат думите).
+
+submit_action.php: Универсален вход за пращане на дума, глас или избор на тема.
+
+🎨 Визуални изисквания и UI
+Split Screen: Вляво – 3D масата с играчите; Вдясно – модерна чат система с Glassmorphism.
+Език: Целият интерфейс е на БЪЛГАРСКИ.
+Брандинг: Името "Шматки" трябва да е с весел, "bubbly" шрифт.
+Интерактивност: При гласуване, 3D аватарът на играча трябва да трепне (animation shake).
+
+🚦 Правила за разработка (Prompt Directions for Cursor)
+API First: Дефинирай JSON структурите преди логиката.
+Zustand Over Prop-Drilling: Цялото състояние на играта (gameState) се държи в един Store.
+No Root usage: В логиката за "Discussing" да се добави проверка (клиентска) дали думата не съдържа корена на тайната дума.
+Super Admin Power: Само потребители с is_superadmin = 1 имат достъп до admin_dashboard.php за управление на профили.
+Clean 3D: Използвай Suspense за зареждане на 3D моделите и оптимизирай рендъра за 30 аватара.
+
+🚀 Стартиране на средата
+Backend: php -S localhost:8000 в папка /api.
+Frontend: npm run dev в коренната папка.
+DB: Импорт на shmatki_db.sql.
