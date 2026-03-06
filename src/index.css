@@ -1,68 +1,48 @@
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  color-scheme: dark;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+html, body, #root {
+  height: 100dvh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #12102e;
 }
 
 body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  touch-action: manipulation;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+@layer components {
+  .shmatki-button {
+    @apply bg-btn-gradient text-black font-black uppercase tracking-widest 
+           py-4 px-8 rounded-[2rem] shadow-btn active:scale-95 
+           transition-all duration-200 flex items-center justify-center text-lg;
   }
-  a:hover {
-    color: #747bff;
+
+  .shmatki-input {
+    @apply w-full bg-[#3d3d3d]/50 border-2 border-shmatki-cyan/20 
+           rounded-2xl py-4 text-center text-white text-xl 
+           outline-none focus:border-shmatki-cyan/60 transition-all 
+           placeholder:text-gray-500 shadow-inner;
   }
-  button {
-    background-color: #f9f9f9;
+
+  .shmatki-card {
+    @apply bg-white/5 backdrop-blur-xl border border-white/10 
+           rounded-[2.5rem] p-8 w-full max-w-[340px] shadow-2xl;
+  }
+}
+
+@supports (padding: env(safe-area-inset-top)) {
+  .safe-padding {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
   }
 }
