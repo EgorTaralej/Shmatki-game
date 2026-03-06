@@ -21,7 +21,7 @@ export default function RevealScreen() {
         <div className="bg-black/40 p-8 rounded-[2rem] border border-white/5 w-full text-center shadow-inner">
           {role === 'imposter' ? (
             <>
-              <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-3">Темата е:</p>
+              <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-3">Думата е свързана с:</p>
               <p className="text-2xl font-black tracking-[0.2em]">{hint}</p>
             </>
           ) : (

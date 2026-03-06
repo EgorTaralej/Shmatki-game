@@ -26,9 +26,18 @@ CREATE TABLE rooms (
     id INT PRIMARY KEY AUTO_INCREMENT,
     room_code VARCHAR(10) UNIQUE,
     status ENUM('lobby', 'selection', 'reveal', 'discussing', 'voting', 'results') DEFAULT 'lobby',
-    host_player_id INT, -- ID на играча, който е текущ водещ
+    host_player_id INT,
     current_word VARCHAR(100),
+    secret_word VARCHAR(100),
+    category VARCHAR(100),
     timer_ends_at TIMESTAMP
+);
+
+-- Думи за рунда: дума + категория (за импостъра показваме само категорията "свързана с")
+CREATE TABLE game_words (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    word VARCHAR(100) NOT NULL,
+    category VARCHAR(100) NOT NULL
 );
 
 CREATE TABLE players (
