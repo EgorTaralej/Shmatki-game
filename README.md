@@ -1,23 +1,18 @@
 🎭 Project: Шматки (Official Developer Guide v2.0)
-"Шматки" е социална игра за дедукция и импровизация в 3D уеб среда. Всички играчи участват активно, включително този, който е избрал темата.
-
+"Шматки" е социална игра за дедукция и импровизация, оптимизирана за мобилни устройства. Всички играчи участват активно, включително този, който е избрал темата (Active Host).
 🛠 Технологичен Стак
 Слой	Технология
 Frontend	React 18 (Vite), TypeScript, Tailwind CSS
-3D Engine	React Three Fiber (Three.js) + @react-three/drei
-State Management	Zustand (за логиката на играта)
-Backend	Pure PHP 8.x (без фреймворци)
+UI/UX	Mobile-First, Framer Motion (Анимации)
+State Management	Zustand (Глобално състояние)
+Backend	Pure PHP 8.x (REST API)
 Database	MySQL 8.0 (PDO за сигурност)
-Communication	REST API + High-frequency Polling
-
+Communication	High-frequency Polling (1.5s интервал)
 👥 Роли и Функции
-Super Admin (Глобален): Управлява платформата, профилите и следи за злоупотреби. Не участва в геймплея на стаите, освен ако не влезе като играч.
-Водещ на рунда (Active Host): Един от играчите в стаята.
-Преди рунда: Избира категория и дума (ръчно или от базата).
-По време на рунда: Играе наравно с останалите. Получава думата (която сам е избрал) и трябва да напише своята асоциация в чата като всеки друг.
-Шматката (Imposter): Един случаен играч (различен от Водещия). Не знае думата, получава 1-2 подсказки.
-Останалите играчи (Innocents): Получават тайната дума и се опитват да открият Шматката.
-
+Super Admin (Глобален): Управлява платформата, профилите и следи за злоупотреби. Има достъп до пълната статистика.
+Водещ на рунда (Active Host): Един от играчите. Избира категория/дума, но играе наравно с другите (пише асоциация в чата).
+Шматката (Imposter): Един случаен играч. Не знае думата, получава само категория/подсказки.
+Останалите играчи (Innocents): Виждат тайната дума и се опитват да открият Шматката.
 🏗️ Архитектура на Базата Данни (MySQL)
 code
 SQL
@@ -49,7 +44,7 @@ CREATE TABLE rooms (
     id INT PRIMARY KEY AUTO_INCREMENT,
     room_code VARCHAR(10) UNIQUE,
     status ENUM('lobby', 'selection', 'reveal', 'discussing', 'voting', 'results') DEFAULT 'lobby',
-    host_player_id INT, -- ID на играча, който е текущ водещ
+    host_player_id INT,
     current_word VARCHAR(100),
     timer_ends_at TIMESTAMP
 );
@@ -57,13 +52,13 @@ CREATE TABLE rooms (
 CREATE TABLE players (
     id INT PRIMARY KEY AUTO_INCREMENT,
     room_id INT,
-    user_id INT, -- Link to users table
-    username VARCHAR(50), -- Can still keep this for display or fallback, or fetch from users JOIN
+    user_id INT,
+    username VARCHAR(50),
     role ENUM('innocent', 'imposter') DEFAULT 'innocent',
-    is_host BOOLEAN DEFAULT 0, -- Дали е избрал думата за този рунд
+    is_host BOOLEAN DEFAULT 0,
     is_superadmin BOOLEAN DEFAULT 0,
     score INT DEFAULT 0,
-    chat_word VARCHAR(100), -- Едната дума, която играчът пише за рунда
+    chat_word VARCHAR(100),
     voted_for_id INT,
     last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE,
@@ -116,15 +111,6 @@ CREATE TABLE votes_history (
     FOREIGN KEY (target_id) REFERENCES players(id) ON DELETE CASCADE
 );
 
-CREATE TABLE game_events (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    room_id INT,
-    event_type VARCHAR(50),
-    payload JSON,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE
-);
-
 CREATE TABLE user_stats (
     user_id INT PRIMARY KEY,
     total_wins INT DEFAULT 0,
@@ -133,53 +119,25 @@ CREATE TABLE user_stats (
     caught_count INT DEFAULT 0,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
-
-CREATE TABLE achievements (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(100) NOT NULL,
-    description TEXT,
-    icon_url VARCHAR(255)
-);
-
-CREATE TABLE user_achievements (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT,
-    achievement_id INT,
-    earned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (achievement_id) REFERENCES achievements(id) ON DELETE CASCADE
-);
-
 🧠 Геймплей Логика (Core Loop)
-Selection: Водещият (Host) избира дума.
-Reveal: Всички (включително Водещият) виждат думата. Шматката вижда само подсказките.
-Discussion (1 мин): ВСИЧКИ играчи (вкл. Водещият и Шматката) пишат точно по една дума в чата.
-Voting: Всички гласуват за това кой според тях е Шматката.
-Final Guess: Ако Шматката е разкрит, той се опитва да познае думата.
-
+Selection: Водещият избира тема/дума.
+Reveal: Плавна анимация на картата. Селяните виждат думата, Шматката вижда хинт.
+Discussion (1-2 мин): Играчите пишат асоциации в чата. Думите се появяват като "стикери" над техните имена в мрежата.
+Voting: Екран за гласуване (тип Among Us).
+Final Guess: Шматката се опитва да открадне победата, ако е разкрита.
 🎨 Визуални изисквания (UI/UX)
-3D Маса (Center): Динамична маса за до 30 играчи.
-3D Chat Bubbles: Всяка написана дума се появява като балонче над аватара на играча (Roblox style).
-Split Screen: Чатът вдясно е за обща комуникация и за финализиране на думите.
-Български език: Всички съобщения ("Водещият избира дума...", "Шматката се крие!", "Гласувай!") са на Български.
-
+Mobile-First: Използване на dvh (Dynamic Viewport Height) за избягване на проблеми с браузърните ленти.
+Брандинг: Шматки-градиент (Cyan към Magenta), заоблени ъгли (2.5rem), тъмен фон.
+No 3D: Изчистен 2D интерфейс с Grid система за играчите.
+Език: 100% Български.
 🚦 Инструкции за разработка (Prompt Directions)
-Active Host Logic: Увери се, че host_player_id е част от масива с активни играчи и клиентът му показва същия интерфейс за писане на дума, както на останалите.
-Word Validation: Да не се позволява на Водещия или играчите да изпращат дума, която е идентична с "Тайната дума".
-Zustand Store: Да управлява състоянията isHost, isImposter и currentPhase.
-Polling: Фронтендът трябва да проверява за промяна в room_status на всеки 1.5 секунди.
-
-🚀 Стартиране
-Генерирай api/config.php и api/game.php.
-Генерирай React компонентите: Table3D.tsx, ChatOverlay.tsx, GameProvider.tsx.
-Стартирай с името на играта: "Шматки".
-
-💡 Как това помага на вашия 8-членен екип?
-
-| Екип | Задача по новите таблици |
-| :--- | :--- |
-| **Backend 1** | Логика за записване в `game_rounds` и `round_submissions`. |
-| **Backend 2** | Логика за събитията (`game_events`) – това е "двигателят" на играта (Long Polling). |
-| **Frontend 1**| Екран "Reveal" – извличане на данните от `round_submissions` и красива анимация. |
-| **Frontend 2**| История на гласуването – визуализация на това кой за кого е гласувал. |
-| **QA** | Тестване дали точките се записват правилно в `players` след всеки `game_rounds` запис. |
+Polling Engine: Бекендът трябва да е лек, за да издържи запитвания на всеки 1.5 сек от 30 играчи.
+Zustand Sync: Фронтендът трябва автоматично да сменя екраните при промяна на rooms.status в БД.
+Security: Скриптовете get_state.php и reveal.php трябва да проверяват стриктно user_id, за да не изтече тайната дума към Шматката през JSON отговора.
+🚀 Разпределение на екипа
+Екип	Основна задача
+Backend 1	Управление на стаи и лоби (rooms, players).
+Backend 2	Логика на рундовете и гласуването (game_rounds, votes_history).
+Frontend 1	Дизайн на екраните за Вход, Лоби и Настройки (Mobile Friendly).
+Frontend 2	Екран за игра, чат и анимации при разкриване на роля.
+QA	Тестване на конкурентни записи в БД при едновременно гласуване.
