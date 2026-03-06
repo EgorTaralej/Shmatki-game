@@ -1,28 +1,32 @@
+import { useState } from 'react';
 import { useGameStore } from '../../store/useGameStore';
 
 export default function JoinScreen() {
-  const setPhase = useGameStore((state) => state.setPhase);
+  const joinRoom = useGameStore((state) => state.joinRoom);
+  const [name, setName] = useState('');
+  const [code, setCode] = useState('');
 
   return (
-    <div className="flex flex-col items-center gap-10 w-full max-w-[320px]">
-      <div className="flex flex-col gap-5 w-full">
+    <div className="flex flex-col items-center gap-8 w-full max-w-[320px]">
+      <div className="flex flex-col gap-4 w-full">
         <input 
-          type="text" 
-          placeholder="име" 
-          className="shmatki-input"
-          autoComplete="off"
-          spellCheck="false"
+          type="text" placeholder="име" className="shmatki-input"
+          value={name} onChange={(e) => setName(e.target.value)}
         />
         <input 
-          type="text" 
-          placeholder="код" 
-          className="shmatki-input uppercase placeholder:normal-case"
-          autoComplete="off"
+          type="text" placeholder="код" className="shmatki-input uppercase"
+          value={code} onChange={(e) => setCode(e.target.value.toUpperCase())}
           maxLength={6}
         />
       </div>
 
-      <button onClick={() => setPhase('LOBBY')} className="shmatki-button w-full">
+      <button 
+        onClick={() => {
+          if(!name || !code) return alert("Попълни всичко!");
+          joinRoom(name, code); // ТОВА ИЗВИКВА PHP
+        }} 
+        className="shmatki-button"
+      >
         ВЛЕЗ
       </button>
     </div>

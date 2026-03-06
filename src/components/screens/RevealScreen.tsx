@@ -1,44 +1,38 @@
+// src/components/RevealScreen.tsx
 import { motion } from 'framer-motion';
 import { useGameStore } from '../../store/useGameStore';
 
 export default function RevealScreen() {
-  const { players, myId, setPhase } = useGameStore();
-  const me = players.find(p => p.id === myId);
+  const { role, word, hint, setPhase } = useGameStore();
 
   return (
-    <div className="flex flex-col items-center justify-center h-full w-full text-center px-6">
+    <div className="flex flex-col items-center justify-center h-full w-full px-6">
       <motion.div 
-        initial={{ scale: 0.5, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        className="shmatki-card py-16"
+        initial={{ rotateY: 90 }} animate={{ rotateY: 0 }} transition={{ duration: 0.5 }}
+        className="shmatki-card py-16 flex flex-col items-center"
       >
-        <h2 className="text-4xl font-black mb-8 leading-tight">
+        <h2 className="text-4xl font-black mb-8 leading-tight italic text-center uppercase">
           ТИ СИ <br /> 
-          <span className={me?.role === 'imposter' ? 'text-shmatki-magenta' : 'text-shmatki-cyan'}>
-            {me?.role === 'imposter' ? 'ИМПОСТЕР' : 'СЕЛЯНИН'}
+          <span className={role === 'imposter' ? 'text-shmatki-magenta' : 'text-shmatki-cyan'}>
+            {role === 'imposter' ? 'ИМПОСТЕР' : 'СЕЛЯНИН'}
           </span>
         </h2>
 
-        <div className="bg-black/20 p-6 rounded-3xl border border-white/5">
-          {me?.role === 'imposter' ? (
+        <div className="bg-black/40 p-8 rounded-[2rem] border border-white/5 w-full text-center shadow-inner">
+          {role === 'imposter' ? (
             <>
-              <p className="text-gray-400 text-sm uppercase font-bold mb-2">Думата е свързана с:</p>
-              <p className="text-2xl font-black tracking-widest">{me.hint}</p>
+              <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-3">Темата е:</p>
+              <p className="text-2xl font-black tracking-[0.2em]">{hint}</p>
             </>
           ) : (
             <>
-              <p className="text-gray-400 text-sm uppercase font-bold mb-2">Думата е:</p>
-              <p className="text-3xl font-black tracking-widest text-shmatki-cyan">{me?.word}</p>
+              <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-3">Думата е:</p>
+              <p className="text-3xl font-black tracking-[0.2em] text-shmatki-cyan">{word}</p>
             </>
           )}
         </div>
 
-        <button 
-          onClick={() => setPhase('PLAYING')}
-          className="shmatki-button mt-12 w-full"
-        >
-          РАЗБРАХ
-        </button>
+        <button onClick={() => setPhase('PLAYING')} className="shmatki-button mt-12 w-full">РАЗБРАХ</button>
       </motion.div>
     </div>
   );
